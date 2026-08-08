@@ -1,0 +1,5 @@
+*.db
+*.db-journal
+data.db
+server
+/bin/
