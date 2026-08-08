@@ -41,7 +41,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// 1. Health check
-	mux.HandleFunc("GET /health", healthHandler)
+	mux.HandleFunc("/health", healthHandler)
 
 	// 2. List all items
 	mux.HandleFunc("GET /items", listItemsHandler)
@@ -58,10 +58,14 @@ func main() {
 	// 6. Delete an item
 	mux.HandleFunc("DELETE /items/{id}", deleteItemHandler)
 
-	addr := os.Getenv("ADDR")
-	if addr == "" {
-		addr = ":8080"
-	}
+    addr := os.Getenv("ADDR")
+    if addr == "" {
+        if port := os.Getenv("PORT"); port != "" {
+            addr = ":" + port
+        } else {
+            addr = ":8080"
+        }
+    }
 
 	log.Printf("listening on %s (db: %s)", addr, dbPath)
 	if err := http.ListenAndServe(addr, mux); err != nil {
