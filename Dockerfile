@@ -3,13 +3,13 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-# Cache dependencies
-COPY go.mod ./
-RUN go mod tidy
+# Copy dependency files
+COPY go.mod go.sum ./
+RUN go mod download
 
+# Copy source code and build binary
 COPY . .
-RUN go mod tidy && \
-    CGO_ENABLED=0 GOOS=linux go build -o /app/server .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server .
 
 # ---- Runtime stage ----
 FROM alpine:3.20
@@ -20,10 +20,6 @@ RUN apk add --no-cache ca-certificates && \
 WORKDIR /app
 COPY --from=builder /app/server /app/server
 
-ENV ADDR=:8080
-ENV DB_PATH=/data/data.db
-
-RUN mkdir -p /data && chown -R app:app /data
 USER app
 
 EXPOSE 8080

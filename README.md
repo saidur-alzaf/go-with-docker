@@ -1,70 +1,74 @@
-# go-sqlite-api
+# PostgreSQL Repository Pattern API with Analytics & Gotify Integration
 
-A minimal Go REST API backed by SQLite (pure-Go driver, no CGO), with a
-Dockerfile and a GitHub Actions CI workflow.
+A clean, modular REST API built in Go 1.22 using the **Repository Pattern** and **Clean Architecture**. It manages 3 core PostgreSQL database entities (**User**, **Product**, **Order**), provides **Analytics/Analysis endpoints**, and triggers **Gotify** push notifications.
 
-## Routes
+---
 
-| Method | Path         | Description         |
-|--------|--------------|----------------------|
-| GET    | `/health`    | Health check         |
-| GET    | `/items`     | List all items       |
-| POST   | `/items`     | Create an item        |
-| GET    | `/items/{id}`| Get a single item     |
-| PUT    | `/items/{id}`| Update an item        |
-| DELETE | `/items/{id}`| Delete an item        |
+## Architecture Overview
 
-## Run locally
+- **Domain Layer** (`internal/domain`): Core models and interfaces for entities and repositories.
+- **Repository Layer** (`internal/repository/postgres`): PostgreSQL implementations with raw SQL queries and transactions.
+- **Service Layer** (`internal/service`): Business logic, stock deduction validations, and Gotify event dispatchers.
+- **Notification Layer** (`internal/notification`): Gotify HTTP notification client.
+- **Handler Layer** (`internal/handler`): HTTP REST controllers utilizing Go 1.22 enhanced routing.
 
-Requires Go 1.22+.
+---
 
-```bash
-go mod tidy
-go run .
-```
+## Features
 
-The server listens on `:8080` by default and stores data in `./data.db`.
-Override with the `ADDR` and `DB_PATH` environment variables.
+- **PostgreSQL Database**: Auto-initializes schema (`users`, `products`, `orders`, `order_items`).
+- **User Management**: Full CRUD (`/api/v1/users`).
+- **Product Management**: Full CRUD (`/api/v1/products`) with stock quantity tracking.
+- **Order Management**: Order placement with stock deduction, order item mapping, total computation, and status updates (`/api/v1/orders`).
+- **Analytics & Analysis**:
+  - `GET /api/v1/analysis/summary` - Total users, products, orders, revenue, average order value, low-stock count.
+  - `GET /api/v1/analysis/top-products` - Top selling products by quantity and revenue.
+  - `GET /api/v1/analysis/user-stats` - Top spending customers.
+  - `GET /api/v1/analysis/sales-trend` - Orders & revenue breakdown by status.
+- **Gotify Push Notifications**:
+  - Triggers alerts on User Registration, New Order placement, Order Status updates, and Low Stock (< 5 items) warnings.
 
-### Example requests
+---
 
-```bash
-curl http://localhost:8080/health
+## Running with Docker Compose
 
-curl -X POST http://localhost:8080/items \
-  -H "Content-Type: application/json" \
-  -d '{"name":"first item"}'
-
-curl http://localhost:8080/items
-
-curl http://localhost:8080/items/1
-
-curl -X PUT http://localhost:8080/items/1 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"updated item"}'
-
-curl -X DELETE http://localhost:8080/items/1
-```
-
-## Run with Docker
+Start the Go API, PostgreSQL, and Gotify services:
 
 ```bash
-docker build -t go-sqlite-api .
-docker run -p 8080:8080 -v $(pwd)/data:/data go-sqlite-api
+docker-compose up --build
 ```
 
-The container writes its SQLite file to `/data/data.db`; mount a volume
-there to persist data across restarts.
+- **API Endpoint**: `http://localhost:8080`
+- **PostgreSQL Database**: `localhost:5432`
+- **Gotify Server Dashboard**: `http://localhost:8088` (Default login: `admin` / `admin`)
 
-## CI
+---
 
-`.github/workflows/ci.yml` runs on every push/PR to `main`:
-1. `go mod tidy`, `go vet`, `go build`, `go test`
-2. Builds the Docker image to make sure it compiles cleanly
+## API Endpoints
 
-## Notes
+### 1. Users
+- `POST /api/v1/users` - Create user
+- `GET /api/v1/users` - List all users
+- `GET /api/v1/users/{id}` - Get user details
+- `PUT /api/v1/users/{id}` - Update user
+- `DELETE /api/v1/users/{id}` - Delete user
 
-- Uses `modernc.org/sqlite`, a pure-Go SQLite driver, so no CGO or system
-  SQLite library is needed to build or run the container.
-- `go.sum` is not checked in here — run `go mod tidy` once (or let the
-  Dockerfile/CI do it) to generate it against your network.
+### 2. Products
+- `POST /api/v1/products` - Create product
+- `GET /api/v1/products` - List products
+- `GET /api/v1/products/{id}` - Get product details
+- `PUT /api/v1/products/{id}` - Update product
+- `DELETE /api/v1/products/{id}` - Delete product
+
+### 3. Orders
+- `POST /api/v1/orders` - Place new order
+- `GET /api/v1/orders` - List all orders (filter with `?user_id=1`)
+- `GET /api/v1/orders/{id}` - Get order details with item list
+- `PATCH /api/v1/orders/{id}/status` - Update status (`pending`, `completed`, `cancelled`)
+- `DELETE /api/v1/orders/{id}` - Cancel/Delete order
+
+### 4. Analysis
+- `GET /api/v1/analysis/summary` - Overall metrics summary
+- `GET /api/v1/analysis/top-products?limit=5` - Most sold products
+- `GET /api/v1/analysis/user-stats?limit=5` - Top spending customers
+- `GET /api/v1/analysis/sales-trend` - Sales distribution by status
