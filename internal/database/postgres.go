@@ -53,9 +53,12 @@ func MigrateProductDB(db *sql.DB) error {
 		price NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
 		stock_quantity INT NOT NULL DEFAULT 0,
 		category VARCHAR(100) DEFAULT 'general',
+		image_url TEXT DEFAULT '',
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 	);
+
+	ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT '';
 	`
 	if _, err := db.Exec(schema); err != nil {
 		return fmt.Errorf("failed to migrate product schema: %w", err)

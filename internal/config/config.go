@@ -28,6 +28,15 @@ type Config struct {
 	OrderDB     DBConfig
 	GotifyURL   string
 	GotifyToken string
+	R2          R2Config
+}
+
+type R2Config struct {
+	AccountID       string
+	AccessKeyID     string
+	SecretAccessKey string
+	BucketName      string
+	PublicURL       string
 }
 
 func LoadConfig() *Config {
@@ -60,6 +69,14 @@ func LoadConfig() *Config {
 		SSLMode:  getEnvOrDefault("ORDER_DB_SSLMODE", "disable"),
 	}
 
+	r2Config := R2Config{
+		AccountID:       os.Getenv("R2_ACCOUNT_ID"),
+		AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
+		SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
+		BucketName:      os.Getenv("R2_BUCKET_NAME"),
+		PublicURL:       os.Getenv("R2_PUBLIC_URL"),
+	}
+
 	return &Config{
 		Port:        port,
 		UserDB:      userDB,
@@ -67,6 +84,7 @@ func LoadConfig() *Config {
 		OrderDB:     orderDB,
 		GotifyURL:   os.Getenv("GOTIFY_URL"),
 		GotifyToken: os.Getenv("GOTIFY_TOKEN"),
+		R2:          r2Config,
 	}
 }
 

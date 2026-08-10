@@ -34,6 +34,7 @@ func SetupRouter(deps RouterDependencies) http.Handler {
 	mux.HandleFunc("GET /api/v1/products/{id}", deps.ProductHandler.GetByID)
 	mux.HandleFunc("PUT /api/v1/products/{id}", deps.ProductHandler.Update)
 	mux.HandleFunc("DELETE /api/v1/products/{id}", deps.ProductHandler.Delete)
+	mux.HandleFunc("POST /api/v1/products/{id}/image", deps.ProductHandler.UploadImage)
 
 	// Order Routes
 	mux.HandleFunc("POST /api/v1/orders", deps.OrderHandler.Create)
