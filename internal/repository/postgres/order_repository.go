@@ -14,6 +14,7 @@ type orderRepository struct {
 	db *sql.DB
 }
 
+
 func NewOrderRepository(db *sql.DB) domain.OrderRepository {
 	return &orderRepository{db: db}
 }
